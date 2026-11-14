@@ -986,6 +986,14 @@ def root():
     return {"message": "NASA POWER backend API (single-file). See /docs for interactive API UI."}
 
 
+# Mount EarthTrend India v1 scientific API router
+try:
+    from api.v1.router import router as api_v1_router
+    app.include_router(api_v1_router)
+except Exception as _e:
+    print(f"Notice: api.v1.router could not be imported: {_e}")
+
+
 # Register all routes with /api prefix for Vercel Serverless compatibility
 for _route in list(app.routes):
     if hasattr(_route, "endpoint") and hasattr(_route, "methods") and not _route.path.startswith("/api"):

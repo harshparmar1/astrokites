@@ -24,7 +24,10 @@ const Home = () => {
                 Harness the power of probability-based forecasting for smarter decisions
               </p>
             </div>
-            <button className="cta-button start" onClick={handleExploreForecast}>Explore Forecast</button>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button className="cta-button start" onClick={handleExploreForecast}>Explore Forecast</button>
+              <button className="cta-button" style={{ background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '30px', fontWeight: '700', cursor: 'pointer' }} onClick={() => navigate('/trends')}>🛰 Trend Detective</button>
+            </div>
           </div>
         </div>
       </section>
@@ -71,6 +74,13 @@ const Home = () => {
             <p>
               Comprehensive weather analytics with probability distributions for future predictions, 
               complete historical weather archives, air quality indices, and trend analysis.
+            </p>
+          </div>
+          <div className="feature" style={{ cursor: 'pointer', border: '2px solid #3b82f6' }} onClick={() => navigate('/trends')}>
+            <h3>🛰 Earth System Trend Detective</h3>
+            <p>
+              NASA Space Apps Challenge 2026: Non-parametric Mann-Kendall and Sen's slope statistical analysis
+              for long-term environmental trends across Indian states and districts.
             </p>
           </div>
           <div className="feature">
