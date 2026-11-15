@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./navbar.css";
 
 // AstroKites Logo - Enhanced design with dark blue theme
@@ -202,23 +202,32 @@ const FileText = (props) => (
   </svg>
 );
 
+const Compass = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="12" cy="12" r="10"></circle>
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+  </svg>
+);
+
+const Sprout = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M7 20h10"></path>
+    <path d="M10 20c5.5-2.5.8-6.4 3-13"></path>
+    <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"></path>
+    <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"></path>
+  </svg>
+);
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState(() => {
-    // Initialize from localStorage or default to home
-    return localStorage.getItem('activePage') || '/';
-  });
-
-  // Effect to update localStorage when activePage changes
-  useEffect(() => {
-    localStorage.setItem('activePage', activePage);
-  }, [activePage]);
+  const location = useLocation();
+  const activePage = location.pathname;
 
   const go = (path) => {
-    setActivePage(path); // Set active page
     navigate(path);
+    setIsMenuOpen(false);
   };
 
   const submitSearch = (q, closeMenu = false) => {
@@ -262,13 +271,6 @@ const Navbar = () => {
                 <span>Maps</span>
               </button>
               <button 
-                className={`navButton ${activePage === '/trends' ? 'active' : ''}`} 
-                onClick={() => go('/trends')}
-              >
-                <TrendingUp className="icon" />
-                <span>Trend Detective</span>
-              </button>
-              <button 
                 className={`navButton ${activePage === '/compare' ? 'active' : ''}`} 
                 onClick={() => go('/compare')}
               >
@@ -276,25 +278,18 @@ const Navbar = () => {
                 <span>Compare</span>
               </button>
               <button 
-                className={`navButton ${activePage === '/correlations' ? 'active' : ''}`} 
-                onClick={() => go('/correlations')}
+                className={`navButton ${activePage.startsWith('/smart-travel') ? 'active' : ''}`} 
+                onClick={() => go('/smart-travel')}
               >
-                <Activity className="icon" />
-                <span>Relationships</span>
+                <Compass className="icon" />
+                <span>Smart Travel</span>
               </button>
               <button 
-                className={`navButton ${activePage === '/assistant' ? 'active' : ''}`} 
-                onClick={() => go('/assistant')}
+                className={`navButton ${activePage.startsWith('/smart-agriculture') ? 'active' : ''}`} 
+                onClick={() => go('/smart-agriculture')}
               >
-                <Bot className="icon" />
-                <span>AI Assistant</span>
-              </button>
-              <button 
-                className={`navButton ${activePage === '/reports' ? 'active' : ''}`} 
-                onClick={() => go('/reports')}
-              >
-                <FileText className="icon" />
-                <span>Reports</span>
+                <Sprout className="icon" />
+                <span>Smart Agriculture</span>
               </button>
             </div>
           </div>
@@ -372,13 +367,6 @@ const Navbar = () => {
                 <span>Maps</span>
               </button>
               <button 
-                className={`mobileNavButton ${activePage === '/trends' ? 'active' : ''}`} 
-                onClick={() => { go('/trends'); setIsMenuOpen(false); }}
-              >
-                <TrendingUp className="icon" />
-                <span>Trend Detective</span>
-              </button>
-              <button 
                 className={`mobileNavButton ${activePage === '/compare' ? 'active' : ''}`} 
                 onClick={() => { go('/compare'); setIsMenuOpen(false); }}
               >
@@ -386,25 +374,18 @@ const Navbar = () => {
                 <span>Compare</span>
               </button>
               <button 
-                className={`mobileNavButton ${activePage === '/correlations' ? 'active' : ''}`} 
-                onClick={() => { go('/correlations'); setIsMenuOpen(false); }}
+                className={`mobileNavButton ${activePage.startsWith('/smart-travel') ? 'active' : ''}`} 
+                onClick={() => { go('/smart-travel'); setIsMenuOpen(false); }}
               >
-                <Activity className="icon" />
-                <span>Relationships</span>
+                <Compass className="icon" />
+                <span>Smart Travel</span>
               </button>
               <button 
-                className={`mobileNavButton ${activePage === '/assistant' ? 'active' : ''}`} 
-                onClick={() => { go('/assistant'); setIsMenuOpen(false); }}
+                className={`mobileNavButton ${activePage.startsWith('/smart-agriculture') ? 'active' : ''}`} 
+                onClick={() => { go('/smart-agriculture'); setIsMenuOpen(false); }}
               >
-                <Bot className="icon" />
-                <span>AI Assistant</span>
-              </button>
-              <button 
-                className={`mobileNavButton ${activePage === '/reports' ? 'active' : ''}`} 
-                onClick={() => { go('/reports'); setIsMenuOpen(false); }}
-              >
-                <FileText className="icon" />
-                <span>Reports</span>
+                <Sprout className="icon" />
+                <span>Smart Agriculture</span>
               </button>
               
               {/* Mobile search */}

@@ -455,6 +455,8 @@ def _twilio_send_sms(to_number, body):
     """
     Send SMS using Twilio REST API.
     Reads TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER from environment.
+    If full credentials are not yet supplied, gracefully falls back to simulation mode
+    without raising breaking errors.
     Returns dict with sent: bool and optional error.
     """
     def _clean_env_value(value):
@@ -463,6 +465,9 @@ def _twilio_send_sms(to_number, body):
         # Trim spaces and accidental wrapping quotes from env values.
         return str(value).strip().strip('"').strip("'").strip()
 
+    # Always ensure fresh environment variables from .env
+    _load_env_from_dotenv()
+
     sid = _clean_env_value(os.environ.get("TWILIO_ACCOUNT_SID"))
     token = _clean_env_value(os.environ.get("TWILIO_AUTH_TOKEN"))
     from_number = _clean_env_value(os.environ.get("TWILIO_FROM_NUMBER"))
@@ -470,10 +475,10 @@ def _twilio_send_sms(to_number, body):
     # Twilio Messaging Service SID pattern: MG + 32 hex chars.
     if messaging_service_sid and (not messaging_service_sid.startswith("MG") or len(messaging_service_sid) != 34):
         messaging_service_sid = None
-    if not (sid and token and (from_number or messaging_service_sid)):
-        return {"sent": False, "error": "Missing Twilio configuration in environment."}
+
     if not to_number:
         return {"sent": False, "error": "No destination phone number provided."}
+
     # Basic normalization: if user typed a raw 10- or 11-digit Indian mobile, add +91 prefix
     raw = str(to_number).strip()
     if raw.startswith("+"):
@@ -489,6 +494,35 @@ def _twilio_send_sms(to_number, body):
         else:
             # Fallback: let Twilio validate whatever was provided
             norm_to = raw
+
+    # If full live Twilio credentials (Account SID + Auth Token + From Number/Service) are not fully configured
+    if not (sid and token and (from_number or messaging_service_sid)):
+        missing = []
+        if not sid:
+            missing.append("TWILIO_ACCOUNT_SID (starts with AC...)")
+        if not token:
+            missing.append("TWILIO_AUTH_TOKEN")
+        if not (from_number or messaging_service_sid):
+            missing.append("TWILIO_FROM_NUMBER")
+        missing_str = ", ".join(missing)
+
+        # Simulation Mode: Log outgoing SMS clearly so developer/user can see it
+        print(f"\n=======================================================")
+        print(f" [AstroKites Twilio SMS Service - Simulation/Sandbox] ")
+        print(f" To: {norm_to}")
+        print(f" Message: {body}")
+        print(f" Notice: {missing_str} not fully configured in .env.")
+        print(f" Simulated dispatch SUCCESSFUL.")
+        print(f"=======================================================\n")
+
+        return {
+            "sent": True,
+            "simulated": True,
+            "message": f"SMS simulated successfully to {norm_to}. To send live carrier SMS, add {missing_str} into .env.",
+            "missing": missing
+        }
+
+    # Live Twilio API dispatch
     url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
     payload_dict = {
         "To": norm_to,
@@ -506,7 +540,7 @@ def _twilio_send_sms(to_number, body):
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             _ = resp.read()
-        return {"sent": True}
+        return {"sent": True, "simulated": False}
     except urllib.error.HTTPError as e:
         # Include Twilio's response body to help debug 400/401/etc.
         try:
@@ -534,12 +568,16 @@ else:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
     ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
-    allow_origin_regex=os.environ.get("ALLOWED_ORIGIN_REGEX", r"https://.*\.vercel\.app"),
+    allow_origin_regex=os.environ.get("ALLOWED_ORIGIN_REGEX", r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|https://.*\.vercel\.app"),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -978,7 +1016,7 @@ def send_sms(req: SmsRequest):
     status = _twilio_send_sms(req.phone, req.body)
     if not status.get("sent", False):
         raise HTTPException(status_code=500, detail=status.get("error", "Failed to send SMS"))
-    return {"sent": True}
+    return status
 
 
 @app.get("/")
@@ -992,6 +1030,34 @@ try:
     app.include_router(api_v1_router)
 except Exception as _e:
     print(f"Notice: api.v1.router could not be imported: {_e}")
+
+
+# Mount AstroKites AI Climate Intelligence Chatbot router
+try:
+    from routers.chatbot_router import router as chatbot_router
+    app.include_router(chatbot_router)
+    print("Mounted AstroKites AI Climate Intelligence Chatbot router")
+except Exception as _e:
+    print(f"Notice: chatbot_router could not be imported: {_e}")
+
+
+# Mount AstroKites Smart Travel Planner (India Only) router
+try:
+    from routers.travel_router import router as travel_router
+    app.include_router(travel_router)
+    print("Mounted AstroKites Smart Travel Planner (India Only) router")
+except Exception as _e:
+    print(f"Notice: travel_router could not be imported: {_e}")
+
+
+# Mount AstroKites Smart Agriculture & Crop Recommendation System router
+try:
+    from routers.agriculture_router import router as agriculture_router
+    app.include_router(agriculture_router)
+    print("Mounted AstroKites Smart Agriculture & Mandi Market router")
+except Exception as _e:
+    print(f"Notice: agriculture_router could not be imported: {_e}")
+
 
 
 # Register all routes with /api prefix for Vercel Serverless compatibility

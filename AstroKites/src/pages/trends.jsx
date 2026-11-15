@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./trends.css";
+import { usePageContext } from "../context/PageContext";
 import {
   getVariables,
   getIndianStates,
@@ -9,6 +10,8 @@ import {
   analyzeTrends,
   getTrendsMap
 } from "../api/axios";
+
+const fmt = (num, digits = 4) => (num !== null && num !== undefined && !isNaN(num) ? Number(num).toFixed(digits) : "N/A");
 
 const TrendsPage = () => {
   const [variables, setVariables] = useState([
@@ -35,6 +38,29 @@ const TrendsPage = () => {
   const [trendData, setTrendData] = useState(null);
   const [mapData, setMapData] = useState(null);
   const [hoveredPoint, setHoveredPoint] = useState(null);
+
+  const { updatePageContext } = usePageContext();
+
+  // Sync Trend Detective state to global website context for AI Assistant
+  useEffect(() => {
+    const stateObj = states.find((s) => s.id === selectedState);
+    const regionName = stateObj?.name || selectedState;
+    const locationLabel = selectedDistrict ? `${selectedDistrict}, ${regionName}` : regionName;
+
+    updatePageContext({
+      selected_city: locationLabel,
+      selected_variable: selectedVariable,
+      current_trend_results: trendData?.trend || null,
+      additional_data: {
+        region_id: selectedState,
+        region_name: regionName,
+        district: selectedDistrict || null,
+        prewhiten,
+        alpha,
+        active_tab: activeTab
+      }
+    });
+  }, [selectedState, selectedDistrict, selectedVariable, trendData, states, activeTab, prewhiten, alpha, updatePageContext]);
 
   // Load initial metadata
   useEffect(() => {
@@ -354,7 +380,7 @@ const TrendsPage = () => {
                 <div className="insight-title">Sen's Slope Annual Rate</div>
                 <div className="insight-value">
                   {trendData.trend.annual_rate > 0 ? "+" : ""}
-                  {trendData.trend.annual_rate.toFixed(4)}
+                  {fmt(trendData.trend.annual_rate, 4)}
                 </div>
                 <div className="insight-detail">
                   {trendData.unit}/year ({trendData.variable})
@@ -365,8 +391,8 @@ const TrendsPage = () => {
               <div className="insight-card">
                 <div className="insight-title">95% Confidence Interval</div>
                 <div className="insight-value" style={{ fontSize: "16px", marginTop: "4px" }}>
-                  [{trendData.trend.confidence_interval_95?.lower.toFixed(4)},{" "}
-                  {trendData.trend.confidence_interval_95?.upper.toFixed(4)}]
+                  [{fmt(trendData.trend.confidence_interval_95?.lower, 4)},{" "}
+                  {fmt(trendData.trend.confidence_interval_95?.upper, 4)}]
                 </div>
                 <div className="insight-detail">Unbiased non-parametric median bounds</div>
               </div>
@@ -375,10 +401,10 @@ const TrendsPage = () => {
               <div className="insight-card">
                 <div className="insight-title">Mann-Kendall Test Details</div>
                 <div className="insight-value" style={{ fontSize: "16px", marginTop: "4px" }}>
-                  p = {trendData.trend.p_value < 0.0001 ? "< 0.0001" : trendData.trend.p_value.toFixed(4)}
+                  p = {trendData.trend.p_value != null ? (trendData.trend.p_value < 0.0001 ? "< 0.0001" : fmt(trendData.trend.p_value, 4)) : "N/A"}
                 </div>
                 <div className="insight-detail">
-                  Z = {trendData.trend.mann_kendall?.z_stat.toFixed(2)} | S = {trendData.trend.mann_kendall?.s_stat} | n = {trendData.trend.n_observations}
+                  Z = {fmt(trendData.trend.mann_kendall?.z_stat, 2)} | S = {trendData.trend.mann_kendall?.s_stat ?? "N/A"} | n = {trendData.trend.n_observations ?? "N/A"}
                 </div>
               </div>
             </div>
@@ -432,6 +458,7 @@ const TrendsPage = () => {
           ) : (
             <div className="leaflet-container-wrapper">
               <MapContainer
+                key={selectedVariable}
                 center={[22.5, 82.5]}
                 zoom={5}
                 scrollWheelZoom={true}
@@ -463,7 +490,7 @@ const TrendsPage = () => {
                       >
                         <Tooltip direction="top" offset={[0, -5]} opacity={0.9}>
                           <strong>{reg.region_name}</strong>: {reg.trend_direction} ({reg.annual_rate > 0 ? "+" : ""}
-                          {reg.annual_rate.toFixed(4)}/yr)
+                          {fmt(reg.annual_rate, 4)}/yr)
                         </Tooltip>
                         <Popup>
                           <div className="map-popup">
@@ -475,10 +502,10 @@ const TrendsPage = () => {
                               <strong>Trend:</strong> {reg.trend_direction}
                             </div>
                             <div className="popup-stat">
-                              <strong>Annual Rate:</strong> {reg.annual_rate.toFixed(4)}/yr
+                              <strong>Annual Rate:</strong> {fmt(reg.annual_rate, 4)}/yr
                             </div>
                             <div className="popup-stat">
-                              <strong>Significance:</strong> {reg.is_significant ? `p = ${reg.p_value.toFixed(4)}` : "Not Significant"}
+                              <strong>Significance:</strong> {reg.is_significant ? `p = ${fmt(reg.p_value, 4)}` : "Not Significant"}
                             </div>
                           </div>
                         </Popup>
@@ -498,7 +525,7 @@ const TrendsPage = () => {
                   {mapData.hotspots.slice(0, 4).map((h, i) => (
                     <li key={i}>
                       <strong>{h.region_name}:</strong> {h.annual_rate > 0 ? "+" : ""}
-                      {h.annual_rate.toFixed(4)}/yr (Z-score: {h.z_score}σ, p={h.p_value.toFixed(4)})
+                      {fmt(h.annual_rate, 4)}/yr (Z-score: {fmt(h.z_score, 2)}σ, p={fmt(h.p_value, 4)})
                     </li>
                   ))}
                 </ul>
@@ -508,7 +535,7 @@ const TrendsPage = () => {
                 <ul>
                   {mapData.coldspots.slice(0, 4).map((c, i) => (
                     <li key={i}>
-                      <strong>{c.region_name}:</strong> {c.annual_rate.toFixed(4)}/yr (Z-score: {c.z_score}σ, p={c.p_value.toFixed(4)})
+                      <strong>{c.region_name}:</strong> {fmt(c.annual_rate, 4)}/yr (Z-score: {fmt(c.z_score, 2)}σ, p={fmt(c.p_value, 4)})
                     </li>
                   ))}
                 </ul>

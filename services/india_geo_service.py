@@ -420,6 +420,30 @@ def get_state_by_name_or_id(query: str) -> Optional[Dict[str, Any]]:
     for s in INDIAN_STATES_DATA:
         if s["id"].lower() == q or s["name"].lower() == q:
             return s
+            
+    # Check if this is a district format: e.g. "IN-MH-pune" or "IN-RJ-jaipur"
+    for s in INDIAN_STATES_DATA:
+        s_id_lower = s["id"].lower()
+        if q.startswith(f"{s_id_lower}-"):
+            district_slug = q[len(s_id_lower) + 1:]
+            matching_d = None
+            for d in s.get("districts", []):
+                if d.lower().replace(" ", "-") == district_slug or d.lower() == district_slug:
+                    matching_d = d
+                    break
+            dist_name = matching_d or district_slug.replace("-", " ").title()
+            return {
+                "id": query.strip(),
+                "name": f"{dist_name}, {s['name']}",
+                "district_name": dist_name,
+                "state_name": s["name"],
+                "type": "district",
+                "zone": s.get("zone", "Central"),
+                "lat": s["lat"],
+                "lon": s["lon"],
+                "bbox": s["bbox"],
+                "districts": s.get("districts", [])
+            }
     return None
 
 

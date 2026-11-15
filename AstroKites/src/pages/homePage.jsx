@@ -26,7 +26,6 @@ const Home = () => {
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <button className="cta-button start" onClick={handleExploreForecast}>Explore Forecast</button>
-              <button className="cta-button" style={{ background: 'linear-gradient(135deg, #1e40af, #3b82f6)', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '30px', fontWeight: '700', cursor: 'pointer' }} onClick={() => navigate('/trends')}>🛰 Trend Detective</button>
             </div>
           </div>
         </div>
@@ -76,11 +75,34 @@ const Home = () => {
               complete historical weather archives, air quality indices, and trend analysis.
             </p>
           </div>
-          <div className="feature" style={{ cursor: 'pointer', border: '2px solid #3b82f6' }} onClick={() => navigate('/trends')}>
-            <h3>🛰 Earth System Trend Detective</h3>
+          <div className="feature" style={{ cursor: 'pointer', border: '2px solid #059669', background: '#f0fdf4' }} onClick={() => navigate('/smart-agriculture')}>
+            <h3 style={{ color: '#047857' }}>🌾 Smart Agriculture & Mandi Market</h3>
             <p>
-              NASA Space Apps Challenge 2026: Non-parametric Mann-Kendall and Sen's slope statistical analysis
-              for long-term environmental trends across Indian states and districts.
+              AI crop suitability recommendations based on NASA POWER agroclimatology, ICAR soil classifications, and official AGMARKNET mandi prices with nearby APMC comparisons.
+            </p>
+          </div>
+          <div className="feature" style={{ cursor: 'pointer', border: '1px solid #93c5fd' }} onClick={() => navigate('/smart-travel')}>
+            <h3>🧭 Smart Travel Planner</h3>
+            <p>
+              Discover the optimal travel windows and climate comfort scores across verified Indian tourist destinations.
+            </p>
+          </div>
+          <div className="feature" style={{ cursor: 'pointer', border: '1px solid #93c5fd' }} onClick={() => navigate('/compare')}>
+            <h3>⚖ Regional & Opposite Trends</h3>
+            <p>
+              Identify contrasting trajectories and diverging trends between geographic regions across India.
+            </p>
+          </div>
+          <div className="feature" style={{ cursor: 'pointer', border: '1px solid #93c5fd' }} onClick={() => navigate('/assistant')}>
+            <h3>🤖 AI Scientific Assistant</h3>
+            <p>
+              Inquire about climate data grounded in verified NASA satellite observations with zero hallucinations.
+            </p>
+          </div>
+          <div className="feature" style={{ cursor: 'pointer', border: '1px solid #93c5fd' }} onClick={() => navigate('/reports')}>
+            <h3>📄 Scientific PDF Synthesis Reports</h3>
+            <p>
+              Generate publication-ready PDF reports with statistical verdicts and NASA data quality provenance.
             </p>
           </div>
           <div className="feature">

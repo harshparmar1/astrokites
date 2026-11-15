@@ -1,9 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "./maps.css";
 import { postCheckDate } from "../api/axios";
+import ClimateAlertsTopBar from "../component/alerts/ClimateAlertsTopBar";
+
+// Controller to smoothly pan & zoom Leaflet map to clicked alert
+const MapFlyToController = ({ targetCoords, zoom = 8 }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (targetCoords && targetCoords.lat && targetCoords.lng) {
+      map.flyTo([targetCoords.lat, targetCoords.lng], zoom, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+    }
+  }, [targetCoords, zoom, map]);
+  return null;
+};
 
 
 // ✅ Fix marker icon in React-Leaflet
@@ -20,11 +35,30 @@ L.Icon.Default.mergeOptions({
 const EnglishCountryMap = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [checkResult, setCheckResult] = useState(null);
+  const [showResultsPanel, setShowResultsPanel] = useState(false);
   const markerRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [numDays, setNumDays] = useState(30);
+  const [activeAlert, setActiveAlert] = useState(null);
+  const [targetFly, setTargetFly] = useState(null);
+
+  const handleSelectAlert = (alert) => {
+    setActiveAlert(alert);
+    const lat = alert.coordinates.latitude;
+    const lng = alert.coordinates.longitude;
+    setTargetFly({ lat, lng, timestamp: Date.now() });
+    setSelectedFeature({
+      name: `${alert.district}, ${alert.state}`,
+      lat,
+      lng,
+      isAlert: true,
+      alertData: alert
+    });
+    setCheckResult(null);
+    setShowResultsPanel(false);
+  };
   
 
   const reverseGeocode = async (lat, lng) => {
@@ -63,6 +97,7 @@ const EnglishCountryMap = () => {
           lng,
         });
         setCheckResult(null);
+        setShowResultsPanel(false);
       },
     });
     return null;
@@ -242,11 +277,7 @@ const EnglishCountryMap = () => {
       });
       if (resp.ok) {
         setCheckResult(resp.data || null);
-        try {
-          if (markerRef.current && markerRef.current.openPopup) {
-            markerRef.current.openPopup();
-          }
-        } catch (_) {}
+        setShowResultsPanel(true);
       } else {
         const msg = typeof resp.error === 'string' ? resp.error : JSON.stringify(resp.error);
         alert(`❌ Backend error (${resp.status}): ${msg}`);
@@ -273,12 +304,21 @@ const EnglishCountryMap = () => {
 
   return (
     <div className="maps-container">
+      {/* Official IMD Climate News & Forecast Warnings TopBar */}
+      <ClimateAlertsTopBar
+        onSelectAlert={handleSelectAlert}
+        activeAlertId={activeAlert?.id}
+      />
+
       <div className="map-wrapper">
         <MapContainer
           style={{ height: "100%", width: "100%" }}
           zoom={selectedFeature ? 8 : 3}
           center={selectedFeature ? [selectedFeature.lat, selectedFeature.lng] : [20, 0]}
         >
+          {/* Smooth Leaflet pan/zoom controller when alert is clicked */}
+          <MapFlyToController targetCoords={targetFly} zoom={8} />
+
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -291,165 +331,114 @@ const EnglishCountryMap = () => {
 
           <MapClickHandler />
 
+          {/* Highlighted Warning Circle on Affected District */}
+          {selectedFeature?.isAlert && selectedFeature?.alertData && (
+            <CircleMarker
+              center={[selectedFeature.lat, selectedFeature.lng]}
+              radius={26}
+              pathOptions={{
+                color:
+                  selectedFeature.alertData.severity === 'Red'
+                    ? '#ef4444'
+                    : selectedFeature.alertData.severity === 'Orange'
+                    ? '#f97316'
+                    : '#eab308',
+                fillColor:
+                  selectedFeature.alertData.severity === 'Red'
+                    ? '#ef4444'
+                    : selectedFeature.alertData.severity === 'Orange'
+                    ? '#f97316'
+                    : '#eab308',
+                fillOpacity: 0.35,
+                weight: 3
+              }}
+            />
+          )}
+
           {selectedFeature && (
             <Marker ref={markerRef} position={[selectedFeature.lat, selectedFeature.lng]}>
-              <Popup maxWidth={680}>
-                <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                  <div style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '700', 
-                    color: '#667eea',
-                    marginBottom: '8px',
-                    paddingBottom: '8px',
-                    borderBottom: '2px solid rgba(102, 126, 234, 0.2)'
-                  }}>
-                    📍 {selectedFeature.name}
-                  </div>
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '8px', 
-                    marginBottom: '12px',
-                    fontSize: '12px',
-                    color: '#475569',
-                    background: '#f8fafc',
-                    padding: '8px 12px',
-                    borderRadius: '8px'
-                  }}>
-                    <div><strong>Coordinates:</strong> {parseFloat(selectedFeature.lat).toFixed(4)}°, {parseFloat(selectedFeature.lng).toFixed(4)}°</div>
-                    <div><strong>Period:</strong> {checkResult?.start_date || startDate} → {checkResult?.end_date || 'N/A'} ({checkResult?.days || numDays} Days)</div>
-                  </div>
-
-                  {loading && (
-                    <div style={{ 
-                      marginTop: '12px', 
-                      padding: '16px',
-                      textAlign: 'center',
-                      background: 'rgba(102, 126, 234, 0.1)',
-                      borderRadius: '10px',
-                      color: '#667eea',
-                      fontWeight: '600'
-                    }}>
-                      ⏳ Calculating {numDays}-Day Weather Outlook...
-                    </div>
-                  )}
-
-                  {!loading && checkResult && (
-                    <div style={{ marginTop: '12px' }}>
-                      <div style={{ 
-                        fontWeight: '700', 
-                        fontSize: '16px',
-                        marginBottom: '12px',
-                        color: '#1e293b',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}>
-                        <span>🌦️ {checkResult?.days || numDays}-Day Weather Outlook</span>
-                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>
-                          Confidence: {Math.round((checkResult.summary_metrics?.overall_confidence || 0.85) * 100)}%
+              <Popup maxWidth={340}>
+                <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', padding: '4px' }}>
+                  {selectedFeature.isAlert && selectedFeature.alertData ? (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: '800',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            color: '#ffffff',
+                            background:
+                              selectedFeature.alertData.severity === 'Red'
+                                ? '#ef4444'
+                                : selectedFeature.alertData.severity === 'Orange'
+                                ? '#f97316'
+                                : '#eab308'
+                          }}
+                        >
+                          {selectedFeature.alertData.severity_label}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                          IMD Verified
                         </span>
                       </div>
 
-                      {/* Summary Cards */}
-                      {checkResult.summary_metrics && (
-                        <div className="outlook-summary-grid">
-                          <div className="outlook-card">
-                            <div className="outlook-card-title">🌡️ Temperature</div>
-                            <div className="outlook-card-value">
-                              {checkResult.summary_metrics.temp_avg !== null ? `${checkResult.summary_metrics.temp_avg}°C` : 'N/A'}
-                            </div>
-                            <div className="outlook-card-sub">
-                              Range: {checkResult.summary_metrics.temp_min}° - {checkResult.summary_metrics.temp_max}°C
-                            </div>
-                          </div>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>
+                        {selectedFeature.alertData.title}
+                      </div>
 
-                          <div className="outlook-card">
-                            <div className="outlook-card-title">💧 Rainfall</div>
-                            <div className="outlook-card-value">
-                              {checkResult.summary_metrics.rain_avg_daily !== null ? `${checkResult.summary_metrics.rain_avg_daily} mm/d` : 'N/A'}
-                            </div>
-                            <div className="outlook-card-sub">
-                              Total: {checkResult.summary_metrics.rain_total_expected} mm ({checkResult.summary_metrics.rain_days_count} rainy days)
-                            </div>
-                          </div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#2563eb', marginBottom: '6px' }}>
+                        📍 {selectedFeature.name}
+                      </div>
 
-                          <div className="outlook-card">
-                            <div className="outlook-card-title">💨 Wind Speed</div>
-                            <div className="outlook-card-value">
-                              {checkResult.summary_metrics.wind_avg !== null ? `${checkResult.summary_metrics.wind_avg} m/s` : 'N/A'}
-                            </div>
-                            <div className="outlook-card-sub">
-                              Max Speed: {checkResult.summary_metrics.wind_max} m/s
-                            </div>
-                          </div>
+                      <div style={{ fontSize: '11px', background: '#f8fafc', padding: '6px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '8px' }}>
+                        <strong>Observation:</strong> {selectedFeature.alertData.forecast_metric}
+                      </div>
 
-                          <div className="outlook-card">
-                            <div className="outlook-card-title">🎯 Outlook Score</div>
-                            <div className="outlook-card-value" style={{ color: '#10b981' }}>
-                              {Math.round((checkResult.summary_metrics?.overall_confidence || 0.85) * 100)}%
-                            </div>
-                            <div className="outlook-card-sub">
-                              Climatology Model
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <p style={{ fontSize: '11px', color: '#334155', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                        {selectedFeature.alertData.description}
+                      </p>
 
-                      {/* Interactive Charts */}
-                      {checkResult.daily_predictions && (
+                      <div style={{ fontSize: '10px', color: '#7f1d1d', background: '#fef2f2', padding: '6px', borderRadius: '4px', borderLeft: '3px solid #ef4444' }}>
+                        <strong>Action:</strong> {selectedFeature.alertData.safety_action}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ 
+                        fontSize: '15px', 
+                        fontWeight: '700', 
+                        color: '#1e40af',
+                        marginBottom: '4px'
+                      }}>
+                        📍 {selectedFeature.name}
+                      </div>
+                      
+                      <div style={{ 
+                        fontSize: '11px',
+                        color: '#64748b',
+                        marginBottom: '8px'
+                      }}>
+                        {parseFloat(selectedFeature.lat).toFixed(4)}°, {parseFloat(selectedFeature.lng).toFixed(4)}°
+                      </div>
+
+                      {checkResult ? (
                         <div>
-                          <TemperatureChart predictions={checkResult.daily_predictions} />
-                          <RainfallChart predictions={checkResult.daily_predictions} />
-                          <WindChart predictions={checkResult.daily_predictions} />
-
-                          {/* Scrollable Table */}
-                          <div style={{ marginTop: '16px', fontWeight: '700', fontSize: '14px', color: '#1e293b', marginBottom: '6px' }}>
-                            📅 Daily Predictions ({checkResult.daily_predictions.length} Days)
+                          <div style={{ fontSize: '12px', fontWeight: '600', color: '#0f766e', marginBottom: '8px' }}>
+                            {checkResult.summary_metrics?.temp_avg !== null ? `🌡️ ${checkResult.summary_metrics.temp_avg}°C Avg` : ''} • {checkResult.days || numDays} Days
                           </div>
-                          
-                          <div className="outlook-table-wrapper">
-                            <table className="outlook-table">
-                              <thead>
-                                <tr>
-                                  <th>Date</th>
-                                  <th>Temp (Mean)</th>
-                                  <th>Rain (mm)</th>
-                                  <th>Rain Chance</th>
-                                  <th>Wind (m/s)</th>
-                                  <th>Wind Chance</th>
-                                  <th>Confidence</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {checkResult.daily_predictions.map((day, idx) => (
-                                  <tr key={idx}>
-                                    <td style={{ fontWeight: '600' }}>{formatDateLabel(day.date)}</td>
-                                    <td>
-                                      {day.temperature_mean !== null ? `${day.temperature_mean.toFixed(1)}°C` : 'N/A'}
-                                      <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
-                                        ({day.temperature_min}° - {day.temperature_max}°)
-                                      </span>
-                                    </td>
-                                    <td>{day.rainfall_mean !== null ? `${day.rainfall_mean.toFixed(2)}` : 'N/A'}</td>
-                                    <td>{getRiskBadge(day.rain_probability)}</td>
-                                    <td>
-                                      {day.wind_mean !== null ? `${day.wind_mean.toFixed(2)}` : 'N/A'}
-                                      <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
-                                        ({(day.wind_mean * 3.6).toFixed(1)} km/h)
-                                      </span>
-                                    </td>
-                                    <td>{getRiskBadge(day.windy_probability)}</td>
-                                    <td style={{ fontWeight: '600', color: '#059669' }}>
-                                      {Math.round(day.confidence * 100)}%
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                          <button 
+                            className="submit-btn" 
+                            style={{ padding: '8px 12px', fontSize: '12px', textTransform: 'none', margin: 0 }}
+                            onClick={() => setShowResultsPanel(true)}
+                          >
+                            📊 View Full Forecast & Charts
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          Click "Get Weather Forecast" to calculate outlook
                         </div>
                       )}
                     </div>
@@ -547,9 +536,155 @@ const EnglishCountryMap = () => {
                   </div>
                 )}
               </div>
+
+              {checkResult && (
+                <button
+                  className="submit-btn"
+                  style={{
+                    marginTop: '14px',
+                    background: showResultsPanel 
+                      ? 'linear-gradient(135deg, #475569, #334155)' 
+                      : 'linear-gradient(135deg, #0284c7, #2563eb)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                  onClick={() => setShowResultsPanel(!showResultsPanel)}
+                >
+                  {showResultsPanel ? '✕ Close Forecast Panel' : '📊 View Forecast Results'}
+                </button>
+              )}
             </div>
           )}
         </div>
+
+        {/* Dedicated Aligned Forecast Results Panel */}
+        {showResultsPanel && checkResult && (
+          <div className="forecast-results-panel">
+            <div className="forecast-panel-header">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 className="forecast-panel-title">
+                  <span>🌦️ {selectedFeature?.name || 'Selected Location'}</span>
+                  <span className="forecast-badge-days">{checkResult?.days || numDays} Days</span>
+                </h3>
+                <p className="forecast-panel-subtitle">
+                  {checkResult?.start_date || startDate} → {checkResult?.end_date || 'N/A'} • Climatology Confidence: {Math.round((checkResult.summary_metrics?.overall_confidence || 0.85) * 100)}%
+                </p>
+              </div>
+              <button 
+                className="forecast-panel-close" 
+                onClick={() => setShowResultsPanel(false)}
+                title="Close Forecast Panel"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="forecast-panel-body">
+              {/* Summary Cards */}
+              {checkResult.summary_metrics && (
+                <div className="outlook-summary-grid">
+                  <div className="outlook-card">
+                    <div className="outlook-card-title">🌡️ Temperature</div>
+                    <div className="outlook-card-value">
+                      {checkResult.summary_metrics.temp_avg !== null ? `${checkResult.summary_metrics.temp_avg}°C` : 'N/A'}
+                    </div>
+                    <div className="outlook-card-sub">
+                      Range: {checkResult.summary_metrics.temp_min}° - {checkResult.summary_metrics.temp_max}°C
+                    </div>
+                  </div>
+
+                  <div className="outlook-card">
+                    <div className="outlook-card-title">💧 Rainfall</div>
+                    <div className="outlook-card-value">
+                      {checkResult.summary_metrics.rain_avg_daily !== null ? `${checkResult.summary_metrics.rain_avg_daily} mm/d` : 'N/A'}
+                    </div>
+                    <div className="outlook-card-sub">
+                      Total: {checkResult.summary_metrics.rain_total_expected} mm ({checkResult.summary_metrics.rain_days_count} rainy days)
+                    </div>
+                  </div>
+
+                  <div className="outlook-card">
+                    <div className="outlook-card-title">💨 Wind Speed</div>
+                    <div className="outlook-card-value">
+                      {checkResult.summary_metrics.wind_avg !== null ? `${checkResult.summary_metrics.wind_avg} m/s` : 'N/A'}
+                    </div>
+                    <div className="outlook-card-sub">
+                      Max Speed: {checkResult.summary_metrics.wind_max} m/s
+                    </div>
+                  </div>
+
+                  <div className="outlook-card">
+                    <div className="outlook-card-title">🎯 Outlook Score</div>
+                    <div className="outlook-card-value" style={{ color: '#10b981' }}>
+                      {Math.round((checkResult.summary_metrics?.overall_confidence || 0.85) * 100)}%
+                    </div>
+                    <div className="outlook-card-sub">
+                      Climatology Model
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Interactive Charts */}
+              {checkResult.daily_predictions && (
+                <div>
+                  <TemperatureChart predictions={checkResult.daily_predictions} />
+                  <RainfallChart predictions={checkResult.daily_predictions} />
+                  <WindChart predictions={checkResult.daily_predictions} />
+
+                  {/* Scrollable Table */}
+                  <div style={{ marginTop: '20px', fontWeight: '700', fontSize: '14px', color: '#1e293b', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>📅 Daily Predictions ({checkResult.daily_predictions.length} Days)</span>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal' }}>Scroll to inspect daily breakdown</span>
+                  </div>
+                  
+                  <div className="outlook-table-wrapper">
+                    <table className="outlook-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Temp (Mean)</th>
+                          <th>Rain (mm)</th>
+                          <th>Rain Chance</th>
+                          <th>Wind (m/s)</th>
+                          <th>Wind Chance</th>
+                          <th>Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {checkResult.daily_predictions.map((day, idx) => (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: '600' }}>{formatDateLabel(day.date)}</td>
+                            <td>
+                              {day.temperature_mean !== null ? `${day.temperature_mean.toFixed(1)}°C` : 'N/A'}
+                              <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
+                                ({day.temperature_min}° - {day.temperature_max}°)
+                              </span>
+                            </td>
+                            <td>{day.rainfall_mean !== null ? `${day.rainfall_mean.toFixed(2)}` : 'N/A'}</td>
+                            <td>{getRiskBadge(day.rain_probability)}</td>
+                            <td>
+                              {day.wind_mean !== null ? `${day.wind_mean.toFixed(2)}` : 'N/A'}
+                              <span style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}>
+                                ({(day.wind_mean * 3.6).toFixed(1)} km/h)
+                              </span>
+                            </td>
+                            <td>{getRiskBadge(day.windy_probability)}</td>
+                            <td style={{ fontWeight: '600', color: '#059669' }}>
+                              {Math.round(day.confidence * 100)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

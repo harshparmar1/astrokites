@@ -23,8 +23,28 @@ from services.opposite_trend_service import detect_opposite_trends, compare_regi
 from services.correlation_service import compute_bivariate_correlation, compute_correlation_matrix
 from services.ai_assistant_service import query_scientific_assistant
 from services.report_generator import generate_pdf_report
+from services.year_compare_service import compare_region_years
+from services.imd_alerts_service import get_climate_alerts
 
 router = APIRouter(prefix="/api/v1", tags=["EarthTrend v1"])
+
+
+@router.get("/alerts")
+def get_alerts(
+    state: Optional[str] = Query(None, description="Filter by Indian State (e.g. Kerala, Punjab)"),
+    severity: Optional[str] = Query(None, description="Filter by severity: Red, Orange, Yellow"),
+    category: Optional[str] = Query(None, description="Filter by category: heavy_rainfall, heatwave, thunderstorm, cold_wave"),
+    refresh: bool = Query(False, description="Force refresh alerts cache")
+):
+    """
+    Returns prioritized official India Meteorological Department (IMD)
+    forecast warnings and weather alerts for Indian states and districts.
+    """
+    try:
+        return get_climate_alerts(state=state, severity=severity, category=category, force_refresh=refresh)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch climate alerts: {str(e)}")
+
 
 
 # Request models
@@ -40,6 +60,13 @@ class TrendAnalyzeRequest(BaseModel):
 class CompareRequest(BaseModel):
     region_ids: List[str] = Field(["IN-MH", "IN-RJ"], description="List of 2 or more region IDs")
     variable: str = Field("temperature", description="Environmental variable to compare")
+
+
+class YearCompareRequest(BaseModel):
+    region: str = Field("Goa", description="Indian state ID/name or tourist destination, e.g. Goa, Manali, IN-MH")
+    variable: str = Field("temperature", description="One of: temperature, rainfall, humidity, wind_speed, solar_radiation")
+    year1: int = Field(2026, description="Base year, e.g. 2026")
+    year2: int = Field(2020, description="Comparison year, e.g. 2020")
 
 
 class CorrelationRequest(BaseModel):
@@ -194,6 +221,31 @@ def compare_selected_regions(req: CompareRequest):
     try:
         data = compare_regions(req.region_ids, req.variable)
         return {"status": "success", "comparison": data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/compare/years")
+def post_compare_region_years(req: YearCompareRequest):
+    """Compares a single Indian region/destination across different years (e.g. 2026 vs 2020)."""
+    try:
+        data = compare_region_years(req.region, req.variable, req.year1, req.year2)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/compare/years")
+def get_compare_region_years(
+    region: str = Query("Goa"),
+    variable: str = Query("temperature"),
+    year1: int = Query(2026),
+    year2: int = Query(2020)
+):
+    """Compares a single Indian region/destination across different years via GET."""
+    try:
+        data = compare_region_years(region, variable, year1, year2)
+        return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

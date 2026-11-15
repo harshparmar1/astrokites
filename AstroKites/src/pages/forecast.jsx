@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./forecast.css";
 import { postPowerData, postStateSevenDayForecast, postSendSms } from "../api/axios";
+import { usePageContext } from "../context/PageContext";
 
 // --- CONFIG ---
 const PARAMETERS = ["T2M", "PRECTOT", "WS2M"]; // Temperature (°C), Precipitation (mm/day), Wind speed (m/s)
@@ -559,6 +560,8 @@ const WeatherInsights = ({ forecast }) => {
 
 // --- Main component ---
 const ForecastSimplified = () => {
+  const { updatePageContext } = usePageContext();
+
   // State for location selection
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES_DATA[0]);
   const [selectedState, setSelectedState] = useState(selectedCountry.states[0]);
@@ -633,9 +636,30 @@ const ForecastSimplified = () => {
   const [smsMessage, setSmsMessage] = useState("");
   const [smsPhone, setSmsPhone] = useState("");
   const [alertSmsPhone, setAlertSmsPhone] = useState("");
+  const [singleSmsFeedback, setSingleSmsFeedback] = useState(null);
   const [sendingSingleSms, setSendingSingleSms] = useState(false);
   const [next7Summary, setNext7Summary] = useState(null);
   const [sendingSms, setSendingSms] = useState(false);
+
+  // Sync active forecast location and parameters to global AI context
+  useEffect(() => {
+    updatePageContext({
+      selected_city: selectedCity ? `${selectedCity.name}, ${selectedState?.name || ''}` : selectedState?.name,
+      selected_latitude: selectedCity?.lat,
+      selected_longitude: selectedCity?.lon,
+      selected_start_date: startDate,
+      selected_end_date: endDate,
+      current_forecast_results: forecastData?.daily?.length ? {
+        city: selectedCity?.name,
+        days_count: forecastData.daily.length,
+        summary: allStatesSummary
+      } : null,
+      additional_data: {
+        state: selectedState?.name,
+        country: selectedCountry?.name
+      }
+    });
+  }, [selectedCity, selectedState, selectedCountry, startDate, endDate, forecastData, allStatesSummary, updatePageContext]);
 
   // Function to fetch data
   const fetchData = async () => {
@@ -1772,12 +1796,30 @@ const ForecastSimplified = () => {
                   onClick={async () => {
                     if (!alertSmsPhone || !smsMessage) return;
                     setSendingSingleSms(true);
+                    setSingleSmsFeedback(null);
                     try {
                       const res = await postSendSms({
                         phone: alertSmsPhone,
                         body: smsMessage,
                       });
-                      if (!res.ok) {
+                      if (res.ok) {
+                        if (res.data?.simulated) {
+                          setSingleSmsFeedback({
+                            type: "info",
+                            text: "Simulated SMS dispatched! (Configure TWILIO_ACCOUNT_SID & TWILIO_FROM_NUMBER in .env for live carrier delivery)"
+                          });
+                        } else {
+                          setSingleSmsFeedback({
+                            type: "success",
+                            text: `SMS dispatched successfully to ${alertSmsPhone}!`
+                          });
+                        }
+                      } else {
+                        const errMsg = res.error?.detail || (typeof res.error === "string" ? res.error : "Failed to send SMS");
+                        setSingleSmsFeedback({
+                          type: "error",
+                          text: errMsg
+                        });
                         console.error(res.error);
                       }
                     } finally {
@@ -1789,6 +1831,19 @@ const ForecastSimplified = () => {
                   {sendingSingleSms ? "Sending SMS..." : "Send SMS"}
                 </button>
               </div>
+              {singleSmsFeedback && (
+                <div style={{
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  marginTop: "6px",
+                  background: singleSmsFeedback.type === "success" ? "#ecfdf5" : singleSmsFeedback.type === "info" ? "#eff6ff" : "#fef2f2",
+                  color: singleSmsFeedback.type === "success" ? "#065f46" : singleSmsFeedback.type === "info" ? "#1e40af" : "#991b1b",
+                  border: `1px solid ${singleSmsFeedback.type === "success" ? "#a7f3d0" : singleSmsFeedback.type === "info" ? "#bfdbfe" : "#fecaca"}`
+                }}>
+                  {singleSmsFeedback.text}
+                </div>
+              )}
               <div className="email-send">
                 <input
                   type="email"

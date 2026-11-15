@@ -44,6 +44,28 @@ def query_scientific_assistant(user_prompt: str) -> Dict[str, Any]:
             
     # 3. Handle Question Types
     
+    # Type 0: Greetings & Capabilities
+    greeting_triggers = ["hello", "hi", "hey", "greetings", "help", "who are you", "what can you do", "explain yourself"]
+    is_pure_greeting = any(prompt == g or prompt.startswith(f"{g} ") or prompt.endswith(f" {g}") for g in greeting_triggers) or prompt in ["help", "info", "?"]
+    if is_pure_greeting and not any(k in prompt for k in ["temperature", "rain", "soil", "vegetation", "wind", "humidity", "trend", "maharashtra", "delhi", "kerala", "gujarat", "punjab", "tamil"]):
+        return {
+            "query": user_prompt,
+            "variable": "overview",
+            "response": (
+                "👋 **Hello! I am your Earth System Scientific Assistant.**\n\n"
+                "I evaluate verified NASA observations (POWER, GPM IMERG, SMAP, MODIS) and statistical trend analyses across India without hallucinations.\n\n"
+                "**Here are some things you can ask me:**\n"
+                "• *'Which Indian states show increasing temperatures?'*\n"
+                "• *'Where is rainfall declining across India?'*\n"
+                "• *'Is the temperature trend in Maharashtra statistically significant?'*\n"
+                "• *'What is the relationship between rainfall and vegetation?'*\n"
+                "• *'What are the opposite trends in soil moisture?'*\n"
+                "• *'What is the climate trend in Rajasthan?'*\n\n"
+                "Feel free to specify any Indian state or one of the 6 variables: **temperature, rainfall, soil moisture, vegetation, wind speed, or humidity**."
+            ),
+            "evidence_data": {"type": "greeting"}
+        }
+    
     # Type A: Opposite or Pan-India distribution (e.g. "which states show increasing...", "where is rainfall declining")
     if any(k in prompt for k in ["which states", "where is", "across india", "opposite", "diverging", "highest"]):
         res = detect_opposite_trends(target_var)

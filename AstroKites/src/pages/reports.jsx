@@ -5,8 +5,16 @@ import {
   getIndianStates,
   createPdfReport,
   getReportsList,
-  getDataQuality
+  getDataQuality,
+  apiBase
 } from "../api/axios";
+
+const getDownloadUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return "#";
+  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) return pathOrUrl;
+  const cleanPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return apiBase ? `${apiBase}${cleanPath}` : cleanPath;
+};
 
 const ReportsPage = () => {
   const [variables, setVariables] = useState([
@@ -123,7 +131,7 @@ const ReportsPage = () => {
         {lastGenerated && (
           <div className="success-banner">
             ✅ Report <strong>{lastGenerated.report_id}</strong> generated successfully!{" "}
-            <a href={lastGenerated.download_url} target="_blank" rel="noreferrer" className="download-link">
+            <a href={getDownloadUrl(lastGenerated.download_url)} target="_blank" rel="noreferrer" className="download-link">
               Download PDF ({lastGenerated.filename})
             </a>
           </div>
@@ -156,7 +164,7 @@ const ReportsPage = () => {
                     <td>{r.created_at?.slice(0, 16)}</td>
                     <td>
                       <a
-                        href={`/api/v1/reports/${r.id}/download`}
+                        href={getDownloadUrl(`/api/v1/reports/${r.id}/download`)}
                         target="_blank"
                         rel="noreferrer"
                         className="archive-download-btn"
