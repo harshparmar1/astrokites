@@ -49,36 +49,41 @@ const getSafe = async (url, params = {}) => {
 
 export const postPowerData = async ({ lat, lon, start = null, end = null, parameters = ['T2M', 'PRECTOT', 'WS2M'], token = null, timeout = 60 }) => {
     const payload = { lat, lon, start, end, parameters, token, timeout };
-    return await postSafe('/power-data', payload);
+    return await postSafe('/api/power-data', payload);
 };
 
 export const postForecast = async ({ lat, lon, start = null, end = null, parameters = ['T2M', 'PRECTOT', 'WS2M'], window = 7, token = null, timeout = 60 }) => {
     const payload = { lat, lon, start, end, parameters, window, token, timeout };
-    return await postSafe('/forecast', payload);
+    return await postSafe('/api/forecast', payload);
 };
 
 export const getForecastData = async (lat, lon) => {
-    return await postSafe('/forecast', { lat, lon });
+    return await postSafe('/api/forecast', { lat, lon });
 };
 
 export const postForecastSimple = async ({ lat, lon, date, ndays = 7, parameters = ['T2M', 'PRECTOT', 'WS2M'], window = 7, token = null, timeout = 60 }) => {
     const payload = { lat, lon, date, ndays, parameters, window, token, timeout };
-    return await postSafe('/forecast-simple', payload);
+    return await postSafe('/api/forecast-simple', payload);
 };
 
 export const postCheckDate = async ({ lat, lon, date, ndays = 30, window = 7, thresholds = null, token = null, timeout = 30 }) => {
     const payload = { lat, lon, date, ndays, window, thresholds, token, timeout };
-    return await postSafe('/check-date', payload);
+    return await postSafe('/api/check-date', payload);
 };
 
 export const postStateSevenDayForecast = async ({ states, phone = null, send_sms = false, hot_threshold_c = 38.0, heavy_rain_threshold_mm = 50.0, openweather_api_key = null }) => {
     const payload = { states, phone, send_sms, hot_threshold_c, heavy_rain_threshold_mm, openweather_api_key };
-    return await postSafe('/state-7day-forecast', payload);
+    return await postSafe('/api/state-7day-forecast', payload);
 };
 
 export const postSendSms = async ({ phone, body }) => {
     const payload = { phone, body };
-    return await postSafe('/send-sms', payload);
+    return await postSafe('/api/send-sms', payload);
+};
+
+export const postSendEmail = async ({ email, subject, body, location }) => {
+    const payload = { email, subject, body, location };
+    return await postSafe('/api/send-email', payload);
 };
 
 // ==========================================
@@ -143,35 +148,35 @@ export const getReportsList = async () => getSafe('/api/v1/reports');
 // ==========================================
 
 export const getTravelDestinations = async (query = null, travel_type = null) => {
-    return getSafe('/travel/destinations', { query, travel_type });
+    return getSafe('/api/travel/destinations', { query, travel_type });
 };
 
 export const getTravelClimateAnalysis = async ({ destination, start_year = 2015, end_year = 2024, latitude = null, longitude = null }) => {
-    return postSafe('/travel/climate-analysis', { destination, start_year, end_year, latitude, longitude });
+    return postSafe('/api/travel/climate-analysis', { destination, start_year, end_year, latitude, longitude });
 };
 
 export const getBestTimeToTravel = async ({ destination, travel_type = 'general', start_year = 2015, end_year = 2024, latitude = null, longitude = null }) => {
-    return postSafe('/travel/best-time', { destination, travel_type, start_year, end_year, latitude, longitude });
+    return postSafe('/api/travel/best-time', { destination, travel_type, start_year, end_year, latitude, longitude });
 };
 
 export const getBestTravelDates = async ({ destination, travel_type = 'general', duration_days = 7, date_preference = 'flexible', target_month = null, start_date = null, end_date = null, start_year = 2015, end_year = 2024 }) => {
-    return postSafe('/travel/best-dates', { destination, travel_type, duration_days, date_preference, target_month, start_date, end_date, start_year, end_year });
+    return postSafe('/api/travel/best-dates', { destination, travel_type, duration_days, date_preference, target_month, start_date, end_date, start_year, end_year });
 };
 
 export const compareTravelDestinations = async ({ destinations, travel_type = 'general', travel_month = 10, duration_days = 7, start_year = 2015, end_year = 2024 }) => {
-    return postSafe('/travel/destination-comparison', { destinations, travel_type, travel_month, duration_days, start_year, end_year });
+    return postSafe('/api/travel/destination-comparison', { destinations, travel_type, travel_month, duration_days, start_year, end_year });
 };
 
 export const getTravelComfortCalendar = async ({ destination, travel_type = 'general', start_year = 2015, end_year = 2024 }) => {
-    return postSafe('/travel/travel-calendar', { destination, travel_type, start_year, end_year });
+    return postSafe('/api/travel/travel-calendar', { destination, travel_type, start_year, end_year });
 };
 
 export const getTravelRiskAnalysis = async ({ destination, travel_month = null, travel_type = 'general', start_year = 2015, end_year = 2024 }) => {
-    return postSafe('/travel/risk-analysis', { destination, travel_month, travel_type, start_year, end_year });
+    return postSafe('/api/travel/risk-analysis', { destination, travel_month, travel_type, start_year, end_year });
 };
 
 export const getTravelInsights = async ({ destination, travel_month = null, travel_type = 'general', start_year = 2015, end_year = 2024 }) => {
-    return postSafe('/travel/travel-insights', { destination, travel_month, travel_type, start_year, end_year });
+    return postSafe('/api/travel/travel-insights', { destination, travel_month, travel_type, start_year, end_year });
 };
 
 
@@ -264,64 +269,64 @@ export const streamChatMessage = async ({
 // ==========================================
 
 export const getAgriLocations = async () => {
-    return await getSafe('/agriculture/locations');
+    return await getSafe('/api/agriculture/locations');
 };
 
 export const getAgriCrops = async (category = null) => {
     const params = category ? { category } : {};
-    return await getSafe('/agriculture/crops', params);
+    return await getSafe('/api/agriculture/crops', params);
 };
 
 export const getAgriCrop = async (cropId) => {
-    return await getSafe(`/agriculture/crop/${encodeURIComponent(cropId)}`);
+    return await getSafe(`/api/agriculture/crop/${encodeURIComponent(cropId)}`);
 };
 
 export const getAgriWeather = async (params) => {
-    return await getSafe('/agriculture/weather', params);
+    return await getSafe('/api/agriculture/weather', params);
 };
 
 export const getAgriMarketPrices = async (params = {}) => {
-    return await getSafe('/agriculture/market-prices', params);
+    return await getSafe('/api/agriculture/market-prices', params);
 };
 
 export const getAgriNearbyMandis = async (params) => {
-    return await getSafe('/agriculture/markets/nearby', params);
+    return await getSafe('/api/agriculture/markets/nearby', params);
 };
 
 export const getAgriMarketTrends = async (params) => {
-    return await getSafe('/agriculture/market-trends', params);
+    return await getSafe('/api/agriculture/market-trends', params);
 };
 
 export const postAgriRecommendations = async (payload) => {
-    return await postSafe('/agriculture/recommendations', payload);
+    return await postSafe('/api/agriculture/recommendations', payload);
 };
 
 export const getAgriAlerts = async (params = {}) => {
-    return await getSafe('/agriculture/alerts', params);
+    return await getSafe('/api/agriculture/alerts', params);
 };
 
 export const postAgriRainfallAnalysis = async (payload) => {
-    return await postSafe('/agriculture/rainfall-analysis', payload);
+    return await postSafe('/api/agriculture/rainfall-analysis', payload);
 };
 
 export const postAgriSoilAnalysis = async (payload) => {
-    return await postSafe('/agriculture/soil-analysis', payload);
+    return await postSafe('/api/agriculture/soil-analysis', payload);
 };
 
 export const postAgriPrediction = async (payload) => {
-    return await postSafe('/agriculture/prediction', payload);
+    return await postSafe('/api/agriculture/prediction', payload);
 };
 
 export const postAgriCalendar = async (payload) => {
-    return await postSafe('/agriculture/crop-calendar', payload);
+    return await postSafe('/api/agriculture/crop-calendar', payload);
 };
 
 export const postAgriCompare = async (payload) => {
-    return await postSafe('/agriculture/compare', payload);
+    return await postSafe('/api/agriculture/compare', payload);
 };
 
 export const postAgriInsights = async (payload) => {
-    return await postSafe('/agriculture/insights', payload);
+    return await postSafe('/api/agriculture/insights', payload);
 };
 
 // ==========================================

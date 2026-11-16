@@ -111,6 +111,7 @@ class TestEarthTrendIndia(unittest.TestCase):
         self.assertIn("/check-date", route_paths)
         self.assertIn("/state-7day-forecast", route_paths)
         self.assertIn("/send-sms", route_paths)
+        self.assertIn("/send-email", route_paths)
 
 
 if __name__ == "__main__":

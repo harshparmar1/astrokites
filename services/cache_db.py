@@ -1,10 +1,24 @@
 import os
 import sqlite3
 import json
+import shutil
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "earthtrend_cache.db")
+_ORIGINAL_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "earthtrend_cache.db")
+
+# In serverless environments like Vercel or AWS Lambda, the root deployment directory is read-only.
+# We ensure the SQLite database can be written to by staging it in /tmp if running on Vercel.
+if os.environ.get("VERCEL") or (os.path.exists("/tmp") and not os.access(os.path.dirname(_ORIGINAL_DB_PATH) or ".", os.W_OK)):
+    _TMP_DB_PATH = os.path.join("/tmp", "earthtrend_cache.db")
+    if os.path.exists(_ORIGINAL_DB_PATH) and not os.path.exists(_TMP_DB_PATH):
+        try:
+            shutil.copy2(_ORIGINAL_DB_PATH, _TMP_DB_PATH)
+        except Exception:
+            pass
+    DB_PATH = _TMP_DB_PATH if os.path.exists(_TMP_DB_PATH) else _ORIGINAL_DB_PATH
+else:
+    DB_PATH = _ORIGINAL_DB_PATH
 
 NASA_DATASETS_META = [
     {

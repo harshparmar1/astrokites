@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./forecast.css";
-import { postPowerData, postStateSevenDayForecast, postSendSms } from "../api/axios";
+import { postPowerData, postStateSevenDayForecast, postSendSms, postSendEmail } from "../api/axios";
 import { usePageContext } from "../context/PageContext";
 
 // --- CONFIG ---
@@ -638,6 +638,8 @@ const ForecastSimplified = () => {
   const [alertSmsPhone, setAlertSmsPhone] = useState("");
   const [singleSmsFeedback, setSingleSmsFeedback] = useState(null);
   const [sendingSingleSms, setSendingSingleSms] = useState(false);
+  const [singleEmailFeedback, setSingleEmailFeedback] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [next7Summary, setNext7Summary] = useState(null);
   const [sendingSms, setSendingSms] = useState(false);
 
@@ -1850,22 +1852,60 @@ const ForecastSimplified = () => {
                   placeholder="State government email (optional)"
                   value={governmentEmail}
                   onChange={(e) => setGovernmentEmail(e.target.value)}
+                  disabled={sendingEmail}
                 />
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!alertMessage || !governmentEmail) return;
-                    const subject = "Weather Alert: High Rainfall / High Temperature";
-                    const body = encodeURIComponent(alertMessage);
-                    const mailto = `mailto:${encodeURIComponent(
-                      governmentEmail
-                    )}?subject=${encodeURIComponent(subject)}&body=${body}`;
-                    window.location.href = mailto;
+                    setSendingEmail(true);
+                    setSingleEmailFeedback(null);
+                    try {
+                      const locName = selectedCity ? `${selectedCity.name}, ${selectedState?.name || ''}` : (selectedState?.name || "Monitored Region");
+                      const res = await postSendEmail({
+                        email: governmentEmail.trim(),
+                        subject: `Weather Alert: High Rainfall / High Temperature (${locName})`,
+                        body: alertMessage,
+                        location: locName,
+                      });
+                      if (res.ok && res.data?.sent) {
+                        setSingleEmailFeedback({
+                          type: "success",
+                          text: `✓ Alert email successfully delivered to ${governmentEmail}!`
+                        });
+                      } else {
+                        const errMsg = res.error?.detail || (typeof res.error === "string" ? res.error : "Failed to deliver email. Check credentials or email address.");
+                        setSingleEmailFeedback({
+                          type: "error",
+                          text: `❌ ${errMsg}`
+                        });
+                      }
+                    } catch (err) {
+                      setSingleEmailFeedback({
+                        type: "error",
+                        text: `❌ Failed to send email: ${err?.message || "Network error"}`
+                      });
+                    } finally {
+                      setSendingEmail(false);
+                    }
                   }}
-                  disabled={!alertMessage || !governmentEmail}
+                  disabled={!alertMessage || !governmentEmail || sendingEmail}
                 >
-                  Send Email
+                  {sendingEmail ? "Sending Email..." : "Send Email"}
                 </button>
               </div>
+              {singleEmailFeedback && (
+                <div style={{
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  marginTop: "6px",
+                  background: singleEmailFeedback.type === "success" ? "#ecfdf5" : "#fef2f2",
+                  color: singleEmailFeedback.type === "success" ? "#065f46" : "#991b1b",
+                  border: `1px solid ${singleEmailFeedback.type === "success" ? "#a7f3d0" : "#fecaca"}`
+                }}>
+                  {singleEmailFeedback.text}
+                </div>
+              )}
             </div>
             <p className="muted small">
               The alert and SMS text are generated from real NASA POWER data; review and send them through your official communication channels (email, SMS gateway, etc.).

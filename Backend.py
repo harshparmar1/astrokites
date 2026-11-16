@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 import urllib.request, urllib.error, urllib.parse, json, csv, datetime, os, math, base64
 import numpy as np
@@ -555,6 +555,127 @@ def _twilio_send_sms(to_number, body):
         return {"sent": False, "error": str(e)}
 
 
+def _send_smtp_email(to_email: str, subject: str, body: str, location: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Send an email via SMTP (e.g. Gmail SMTP) with AstroKites branding.
+    Reads SMTP_HOST, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD, SMTP_FROM_NAME from environment.
+    """
+    _load_env_from_dotenv()
+    
+    host = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
+    port_str = os.environ.get("SMTP_PORT", "587").strip()
+    try:
+        port = int(port_str)
+    except Exception:
+        port = 587
+        
+    user = os.environ.get("SMTP_EMAIL", "").strip()
+    raw_pwd = os.environ.get("SMTP_PASSWORD", "")
+    pwd = raw_pwd.replace(" ", "").strip()
+    from_name = os.environ.get("SMTP_FROM_NAME", "AstroKites Weather Intelligence").strip()
+    
+    if not user or not pwd:
+        return {
+            "sent": False,
+            "error": "SMTP credentials not configured. Please set SMTP_EMAIL and SMTP_PASSWORD in .env."
+        }
+        
+    clean_to = (to_email or "").strip()
+    if not clean_to or "@" not in clean_to:
+        return {
+            "sent": False,
+            "error": "Invalid recipient email address provided."
+        }
+
+    loc_badge = f'<div style="display:inline-block;padding:4px 10px;background:#eff6ff;color:#1e40af;font-weight:700;font-size:12px;border-radius:4px;margin-bottom:12px;">📍 Location: {location}</div>' if location else ""
+    clean_subj = subject or "AstroKites Weather Advisory: High Rainfall / High Temperature Alert"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>{clean_subj}</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <tr>
+          <td style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 24px 28px; text-align: left;">
+            <table width="100%">
+              <tr>
+                <td>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">AstroKites</h1>
+                  <p style="color: #bfdbfe; margin: 4px 0 0 0; font-size: 13px;">Official Earth Systems & Meteorological Alert Dispatch</p>
+                </td>
+                <td align="right">
+                  <span style="background: #ef4444; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 9999px; text-transform: uppercase;">WEATHER ALERT</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 28px;">
+            {loc_badge}
+            <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 16px 0; font-weight: 700;">{clean_subj}</h2>
+            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px; padding: 16px; margin-bottom: 20px;">
+              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #7f1d1d; white-space: pre-wrap;">{body}</p>
+            </div>
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0;">
+              <strong>Data Provenance:</strong> Sourced from NASA POWER (Prediction Of Worldwide Energy Resources) Agroclimatology and official meteorological forecasts.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 28px; text-align: center; font-size: 11px; color: #94a3b8;">
+            AstroKites Climate Intelligence Platform • Automated Notification System<br/>
+            This message was generated from the AstroKites Forecast Terminal.
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+
+    try:
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        import smtplib
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = clean_subj
+        msg["From"] = f"{from_name} <{user}>"
+        msg["To"] = clean_to
+
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        server = smtplib.SMTP(host, port, timeout=20)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(user, pwd)
+        server.send_message(msg)
+        server.quit()
+
+        return {
+            "sent": True,
+            "recipient": clean_to,
+            "subject": clean_subj,
+            "message": f"Alert email delivered successfully to {clean_to}."
+        }
+    except smtplib.SMTPAuthenticationError as e:
+        return {
+            "sent": False,
+            "error": f"SMTP Authentication failed: {str(e)}. Please check Gmail App Password in .env."
+        }
+    except Exception as e:
+        return {
+            "sent": False,
+            "error": f"Failed to deliver email: {str(e)}"
+        }
+
+
 
 # ---------------- FastAPI app & models ----------------
 app = FastAPI(title="NASA POWER Backend API (single-file)")
@@ -647,6 +768,13 @@ class StateSevenDayForecastRequest(BaseModel):
 class SmsRequest(BaseModel):
     phone: str
     body: str
+
+
+class EmailRequest(BaseModel):
+    email: str
+    subject: Optional[str] = "Weather Alert: High Rainfall / High Temperature"
+    body: str
+    location: Optional[str] = None
 
 
 @app.post("/power-data")
@@ -1016,6 +1144,24 @@ def send_sms(req: SmsRequest):
     status = _twilio_send_sms(req.phone, req.body)
     if not status.get("sent", False):
         raise HTTPException(status_code=500, detail=status.get("error", "Failed to send SMS"))
+    return status
+
+
+@app.post("/send-email")
+def send_email(req: EmailRequest):
+    """
+    Endpoint to send an official weather alert email using SMTP.
+    Reads SMTP credentials from .env.
+    """
+    clean_email = (req.email or "").strip()
+    if not clean_email or "@" not in clean_email:
+        raise HTTPException(status_code=400, detail="A valid recipient email address is required.")
+    if not req.body or not req.body.strip():
+        raise HTTPException(status_code=400, detail="Email body content cannot be empty.")
+
+    status = _send_smtp_email(clean_email, req.subject or "Weather Alert: High Rainfall / High Temperature", req.body, req.location)
+    if not status.get("sent", False):
+        raise HTTPException(status_code=500, detail=status.get("error", "Failed to send email"))
     return status
 
 

@@ -1,63 +1,44 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "app": {
-      "root": ".",
-      "framework": "fastapi"
-    },
-    "astrokites": {
-      "root": "AstroKites",
-      "framework": "vite"
-    }
-  },
+  "version": 2,
+  "buildCommand": "npm --prefix AstroKites install && npm --prefix AstroKites run build",
+  "outputDirectory": "AstroKites/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index.py"
     },
     {
       "source": "/power-data",
-      "destination": {
-        "service": "app"
-      }
-    },
-    {
-      "source": "/forecast",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
     },
     {
       "source": "/forecast-simple",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
     },
     {
       "source": "/check-date",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
     },
     {
       "source": "/state-7day-forecast",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
     },
     {
       "source": "/send-sms",
-      "destination": {
-        "service": "app"
-      }
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/send-email",
+      "destination": "/api/index.py"
     },
     {
       "source": "/(.*)",
-      "destination": {
-        "service": "astrokites"
-      }
+      "destination": "/index.html"
     }
   ]
 }

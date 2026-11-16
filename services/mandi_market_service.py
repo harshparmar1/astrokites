@@ -11,8 +11,8 @@ import math
 import sqlite3
 import datetime
 from typing import Dict, List, Any, Optional
+from services.cache_db import DB_PATH
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "earthtrend_cache.db")
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "agmarknet_latest.csv")
 
 # Canonical Commodity Mapping

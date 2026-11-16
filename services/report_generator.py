@@ -23,7 +23,10 @@ from services.cache_db import register_report, get_report_by_id, DB_PATH
 from services.data_service import get_series_for_region, VARIABLE_CONFIG
 from services.trend_engine import comprehensive_trend_analysis
 
-REPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "reports")
+if os.environ.get("VERCEL") or (os.path.exists("/tmp") and not os.access(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), os.W_OK)):
+    REPORTS_DIR = os.path.join("/tmp", "reports")
+else:
+    REPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
