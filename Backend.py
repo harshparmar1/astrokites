@@ -1166,6 +1166,10 @@ def send_email(req: EmailRequest):
 
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
+@app.get("/api/index")
+@app.get("/api/index.py")
 def root():
     return {"message": "NASA POWER backend API (single-file). See /docs for interactive API UI."}
 
