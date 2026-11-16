@@ -4,6 +4,10 @@ const rawBaseURL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '
 export const baseURL = (rawBaseURL || '').replace(/\/+$/, '');
 export const apiBase = baseURL;
 
+if (typeof window !== 'undefined') {
+    console.log('[AstroKites API Base URL]:', baseURL || '(empty relative path)');
+}
+
 // Create axios instance with base configuration
 const api = axios.create({
     baseURL,
@@ -16,6 +20,13 @@ const api = axios.create({
 // Generic helper to unwrap response
 const unwrap = (resp) => (resp && resp.data ? resp.data : resp);
 const toErrorPayload = (err) => {
+    console.error('[AstroKites API Error Details]:', {
+        requestedUrl: err?.config?.url,
+        fullUrl: (err?.config?.baseURL || '') + (err?.config?.url || ''),
+        status: err?.response?.status,
+        response: err?.response?.data,
+        message: err?.message,
+    });
     if (err?.response) {
         return { ok: false, status: err.response.status, error: err.response.data || err.message };
     }

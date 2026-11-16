@@ -697,7 +697,7 @@ const ForecastSimplified = () => {
       setForecastData(processedData);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch weather data. Please try again later.");
+      setError(`Failed to fetch weather data: ${err?.message || 'Please check backend connection'}`);
       // Set sample data as fallback
       setForecastData({
         daily: getSample7(),
