@@ -1,6 +1,6 @@
 
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
@@ -1172,6 +1172,17 @@ def send_email(req: EmailRequest):
 @app.get("/api/index.py")
 def root():
     return {"message": "NASA POWER backend API (single-file). See /docs for interactive API UI."}
+
+
+@app.api_route("/debug-path", methods=["GET", "POST"])
+@app.api_route("/api/debug-path", methods=["GET", "POST"])
+def debug_path(request: Request):
+    return {
+        "url": str(request.url),
+        "path": request.url.path,
+        "scope_path": request.scope.get("path"),
+        "method": request.method,
+    }
 
 
 # Mount EarthTrend India v1 scientific API router
