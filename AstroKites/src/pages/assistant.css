@@ -110,3 +110,26 @@
   border-top: 1px solid #e2e8f0;
   background: #ffffff;
 }
+
+@media (max-width: 768px) {
+  .assistant-full-page {
+    padding: 16px 12px 60px;
+  }
+  .assistant-full-page .fs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .header-badge-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .assistant-main-card {
+    height: calc(100vh - 200px);
+    min-height: 480px;
+    border-radius: 12px;
+  }
+  .assistant-main-card .messages-stream {
+    padding: 14px 12px;
+  }
+}

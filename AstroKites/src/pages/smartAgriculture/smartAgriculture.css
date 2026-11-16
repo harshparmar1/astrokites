@@ -316,7 +316,7 @@
 
 .agri-crops-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 22px;
   margin-bottom: 36px;
 }
@@ -632,8 +632,25 @@
 
 /* Responsiveness */
 @media (max-width: 768px) {
+  .agri-container {
+    padding: 16px 12px 60px;
+  }
+  .agri-title {
+    font-size: 1.75rem;
+  }
+  .agri-tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .agri-tab-btn {
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+  }
   .agri-weather-banner {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   .agri-provenance-tag {
     text-align: left;
@@ -642,8 +659,31 @@
   .agri-crops-grid {
     grid-template-columns: 1fr;
   }
-  .agri-table {
-    display: block;
+  .agri-table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .agri-table {
+    display: table;
+    min-width: 600px;
+  }
+  .agri-modal-content {
+    max-width: calc(100vw - 24px);
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agri-container {
+    padding: 12px 8px 48px;
+  }
+  .agri-title {
+    font-size: 1.45rem;
+  }
+  .agri-subtitle {
+    font-size: 0.875rem;
+  }
+  .agri-card {
+    padding: 16px 12px;
   }
 }

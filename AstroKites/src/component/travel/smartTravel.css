@@ -521,17 +521,61 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .st-container {
+    padding: 1rem 0.75rem 3rem 0.75rem;
+  }
+  .st-hero-banner {
+    padding: 1.5rem 1.25rem;
+    border-radius: 0.75rem;
+  }
   .st-hero-title {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .st-hero-subtitle {
+    font-size: 0.95rem;
   }
   .st-filter-grid {
     grid-template-columns: 1fr;
   }
   .st-nav-tabs {
     overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
     padding-bottom: 0.75rem;
+  }
+  .st-tab-btn {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
   }
   .st-cal-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .st-map-container {
+    height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .st-container {
+    padding: 0.75rem 0.5rem 2.5rem 0.5rem;
+  }
+  .st-hero-banner {
+    padding: 1.25rem 1rem;
+  }
+  .st-hero-title {
+    font-size: 1.25rem;
+  }
+  .st-cal-grid {
+    grid-template-columns: 1fr;
+  }
+  .st-grid-destinations {
+    grid-template-columns: 1fr;
+  }
+  .st-map-container {
+    height: 260px;
   }
 }

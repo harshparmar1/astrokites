@@ -811,11 +811,11 @@
 }
 
 /* ==========================================================================
-   Responsive Design
+   Responsive Design - Fluid Across All Screen Breakpoints
    ========================================================================== */
 @media (max-width: 1024px) {
   .hero-title {
-    font-size: 3.8rem;
+    font-size: clamp(3rem, 5.5vw, 4rem);
   }
   .about h2, .features h2, .why-choose-us h2 {
     font-size: 2.3rem;
@@ -823,26 +823,38 @@
 }
 
 @media (max-width: 768px) {
+  .hero {
+    height: auto;
+    min-height: 100svh;
+    padding: 100px 0 60px;
+    background-attachment: scroll;
+  }
+  .hero-content {
+    padding: 0 16px;
+  }
   .hero-title {
-    font-size: 2.8rem;
+    font-size: clamp(2.2rem, 7vw, 3rem);
+    line-height: 1.2;
   }
   .hero-subtitle {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    padding: 0 8px;
   }
   .cta-button, .cta-button-secondary {
     width: 100%;
     max-width: 320px;
-    padding: 14px 24px;
-    font-size: 1rem;
+    padding: 14px 20px;
+    font-size: 0.95rem;
   }
   .about, .features, .why-choose-us {
-    padding: 70px 16px;
+    padding: 60px 16px;
   }
   .about h2, .features h2, .why-choose-us h2 {
-    font-size: 2rem;
+    font-size: 1.85rem;
   }
   .about-pillars, .feature-cards, .stats-grid, .sources-list {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   .footer-top {
     flex-direction: column;
@@ -855,17 +867,47 @@
   .footer-bottom {
     flex-direction: column;
     text-align: center;
+    gap: 12px;
   }
 }
 
 @media (max-width: 480px) {
+  .hero {
+    padding: 85px 0 50px;
+  }
   .hero-title {
-    font-size: 2.2rem;
+    font-size: clamp(1.75rem, 8vw, 2.3rem);
+    letter-spacing: -0.02em;
   }
   .hero-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .cta-button, .cta-button-secondary {
+    max-width: 100%;
+    padding: 12px 18px;
+  }
+  .about, .features, .why-choose-us {
+    padding: 48px 12px;
+  }
+  .about h2, .features h2, .why-choose-us h2 {
+    font-size: 1.55rem;
   }
   .feature, .stat-card, .about-pillar-card {
-    padding: 22px 18px;
+    padding: 18px 14px;
+    border-radius: 12px;
+  }
+  .section-badge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-title {
+    font-size: 1.6rem;
+  }
+  .about-lead {
+    font-size: 0.9rem;
   }
 }

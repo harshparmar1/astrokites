@@ -99,7 +99,7 @@
 
 .quality-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 16px;
   margin-top: 16px;
 }
@@ -134,4 +134,18 @@
   color: #334155;
   margin-bottom: 4px;
   line-height: 1.4;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .archive-card, .quality-card {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+  .quality-grid {
+    grid-template-columns: 1fr;
+  }
+  .generate-pdf-btn {
+    width: 100%;
+  }
 }

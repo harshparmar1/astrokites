@@ -358,3 +358,20 @@
   color: #64748b;
   font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .fs-container {
+    padding: 14px 10px;
+  }
+  .fs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 14px;
+  }
+  .header-badge {
+    align-items: flex-start;
+  }
+  .hotspots-grid {
+    grid-template-columns: 1fr;
+  }
+}
