@@ -789,7 +789,7 @@ def power_data(req: PowerDataRequest):
     end = req.end 
     
     # Ensure end date is not in the future
-    if end > today.strftime("%Y%m%d"):
+    if end and end > today.strftime("%Y%m%d"):
         end = today.strftime("%Y%m%d")
     
     parameters = req.parameters or ['T2M','PRECTOT','WS2M']
@@ -857,7 +857,7 @@ def forecast(req: ForecastRequest):
     end = req.end or safe_end_date.strftime("%Y%m%d")
     
     # Ensure end date is not in the future
-    if end > today.strftime("%Y%m%d"):
+    if end and end > today.strftime("%Y%m%d"):
         end = today.strftime("%Y%m%d")
         
     parameters = req.parameters or ['T2M','PRECTOT','WS2M']

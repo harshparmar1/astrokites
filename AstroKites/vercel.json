@@ -2,6 +2,34 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://astrokites.vercel.app/api/:path*"
+    },
+    {
+      "source": "/power-data",
+      "destination": "https://astrokites.vercel.app/api/power-data"
+    },
+    {
+      "source": "/check-date",
+      "destination": "https://astrokites.vercel.app/api/check-date"
+    },
+    {
+      "source": "/forecast-simple",
+      "destination": "https://astrokites.vercel.app/api/forecast-simple"
+    },
+    {
+      "source": "/state-7day-forecast",
+      "destination": "https://astrokites.vercel.app/api/state-7day-forecast"
+    },
+    {
+      "source": "/send-sms",
+      "destination": "https://astrokites.vercel.app/api/send-sms"
+    },
+    {
+      "source": "/send-email",
+      "destination": "https://astrokites.vercel.app/api/send-email"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
