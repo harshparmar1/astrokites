@@ -1204,6 +1204,7 @@ except Exception as _e:
 try:
     from routers.travel_router import router as travel_router
     app.include_router(travel_router)
+    app.include_router(travel_router, prefix="/api")
     print("Mounted AstroKites Smart Travel Planner (India Only) router")
 except Exception as _e:
     print(f"Notice: travel_router could not be imported: {_e}")
@@ -1213,6 +1214,7 @@ except Exception as _e:
 try:
     from routers.agriculture_router import router as agriculture_router
     app.include_router(agriculture_router)
+    app.include_router(agriculture_router, prefix="/api")
     print("Mounted AstroKites Smart Agriculture & Mandi Market router")
 except Exception as _e:
     print(f"Notice: agriculture_router could not be imported: {_e}")

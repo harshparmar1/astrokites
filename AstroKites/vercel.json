@@ -6,28 +6,36 @@
       "destination": "https://astrokites.vercel.app/api/:path*"
     },
     {
+      "source": "/travel/:path*",
+      "destination": "https://astrokites.vercel.app/travel/:path*"
+    },
+    {
+      "source": "/agriculture/:path*",
+      "destination": "https://astrokites.vercel.app/agriculture/:path*"
+    },
+    {
       "source": "/power-data",
-      "destination": "https://astrokites.vercel.app/api/power-data"
+      "destination": "https://astrokites.vercel.app/power-data"
     },
     {
       "source": "/check-date",
-      "destination": "https://astrokites.vercel.app/api/check-date"
+      "destination": "https://astrokites.vercel.app/check-date"
     },
     {
       "source": "/forecast-simple",
-      "destination": "https://astrokites.vercel.app/api/forecast-simple"
+      "destination": "https://astrokites.vercel.app/forecast-simple"
     },
     {
       "source": "/state-7day-forecast",
-      "destination": "https://astrokites.vercel.app/api/state-7day-forecast"
+      "destination": "https://astrokites.vercel.app/state-7day-forecast"
     },
     {
       "source": "/send-sms",
-      "destination": "https://astrokites.vercel.app/api/send-sms"
+      "destination": "https://astrokites.vercel.app/send-sms"
     },
     {
       "source": "/send-email",
-      "destination": "https://astrokites.vercel.app/api/send-email"
+      "destination": "https://astrokites.vercel.app/send-email"
     },
     {
       "source": "/(.*)",

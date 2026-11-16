@@ -43,6 +43,14 @@
     {
       "source": "/send-email",
       "destination": "/api/send-email"
+    },
+    {
+      "source": "/travel/:path*",
+      "destination": "/api/travel/:path*"
+    },
+    {
+      "source": "/agriculture/:path*",
+      "destination": "/api/agriculture/:path*"
     }
   ]
 }
