@@ -689,7 +689,10 @@ const ForecastSimplified = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`API error: ${response.error || 'Unknown error'}`);
+        const errorDetail = typeof response.error === 'object' 
+          ? (response.error?.detail || JSON.stringify(response.error))
+          : (response.error || 'Unknown error');
+        throw new Error(errorDetail);
       }
       
       // Process the data

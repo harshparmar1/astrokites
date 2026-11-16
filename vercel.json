@@ -1,12 +1,48 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "echo 'Backend-only deployment'",
+  "buildCommand": "echo 'Backend deployment'",
   "outputDirectory": ".",
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index.py"
+      "source": "/",
+      "destination": "/api"
+    },
+    {
+      "source": "/docs",
+      "destination": "/api/docs"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/api/openapi.json"
+    },
+    {
+      "source": "/power-data",
+      "destination": "/api/power-data"
+    },
+    {
+      "source": "/check-date",
+      "destination": "/api/check-date"
+    },
+    {
+      "source": "/forecast",
+      "destination": "/api/forecast"
+    },
+    {
+      "source": "/forecast-simple",
+      "destination": "/api/forecast-simple"
+    },
+    {
+      "source": "/state-7day-forecast",
+      "destination": "/api/state-7day-forecast"
+    },
+    {
+      "source": "/send-sms",
+      "destination": "/api/send-sms"
+    },
+    {
+      "source": "/send-email",
+      "destination": "/api/send-email"
     }
   ]
 }
