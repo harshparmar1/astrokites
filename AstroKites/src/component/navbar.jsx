@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./navbar.css";
 
@@ -221,10 +221,12 @@ const Sprout = (props) => (
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const navRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const activePage = location.pathname;
 
+  // Close menu on navigation
   const go = (path) => {
     navigate(path);
     setIsMenuOpen(false);
@@ -236,18 +238,35 @@ const Navbar = () => {
     if (closeMenu) setIsMenuOpen(false);
   };
 
+  // Close mobile drawer when tapping outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isMenuOpen]);
+
   return (
-    <nav className="navbar">
+    <nav className="navbar" ref={navRef}>
       <div className="navbarContainer">
         <div className="navbarInner">
           {/* Logo and brand name with weather icon */}
           <div className="logoSection">
-            <div className="logoWrapper" role="button" onClick={() => go('/')}>
+            <div className="logoWrapper" role="button" tabIndex={0} onClick={() => go('/')} onKeyDown={(e) => { if (e.key === 'Enter') go('/'); }}>
               <AstroKitesLogo className="logoIcon" />
               <h1 className="logoText">AstroKites</h1>
             </div>
             
-            {/* Desktop Navigation with icons */}
+            {/* Desktop Navigation with icons (Laptop & Desktop) */}
             <div className="desktopNav">
               <button 
                 className={`navButton ${activePage === '/' ? 'active' : ''}`} 
@@ -291,125 +310,127 @@ const Navbar = () => {
                 <Sprout className="icon" />
                 <span>Smart Agriculture</span>
               </button>
+              <button 
+                className={`navButton ${activePage === '/assistant' ? 'active' : ''}`} 
+                onClick={() => go('/assistant')}
+              >
+                <Bot className="icon" />
+                <span>Assistant</span>
+              </button>
+              <button 
+                className={`navButton ${activePage === '/reports' ? 'active' : ''}`} 
+                onClick={() => go('/reports')}
+              >
+                <FileText className="icon" />
+                <span>Reports</span>
+              </button>
             </div>
           </div>
 
-          {/* Search and user section */}
+          {/* Right section: Search & Mobile 3-line hamburger button */}
           <div className="flex-center">
-
-            {/* User buttons with icon */}
-            {/* <div className="userButtons">
-              <button className="signInButton">
-                <User className="icon" />
-                <span>Sign In</span>
-              </button>
-              <button className="signUpButton">
-                <User className="icon" />
-                <span onClick={() => go('/signup')}>Sign Up</span>
-              </button>
-            </div> */}
-
-            {/* Mobile menu button with weather theme */}
-            <div className="mobileMenuButton">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label="Toggle menu"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  {isMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
+            {/* 3-line Mobile Hamburger Toggle Button */}
+            <button
+              className="mobileHamburgerBtn"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? (
+                <svg className="hamburgerIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-              </button>
-            </div>
+              ) : (
+                <svg className="hamburgerIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Mobile menu with enhanced styling */}
+        {/* Mobile menu with clear navigation for all pages */}
         {isMenuOpen && (
           <div className="mobileMenuWrapper">
             <div className="mobileMenuContent">
               <button 
                 className={`mobileNavButton ${activePage === '/' ? 'active' : ''}`} 
-                onClick={() => { go('/'); setIsMenuOpen(false); }}
+                onClick={() => go('/')}
               >
                 <Home className="icon" />
                 <span>Home</span>
               </button>
               <button 
                 className={`mobileNavButton ${activePage === '/forecast' ? 'active' : ''}`} 
-                onClick={() => { go('/forecast'); setIsMenuOpen(false); }}
+                onClick={() => go('/forecast')}
               >
                 <CloudRain className="icon" />
                 <span>Forecast</span>
               </button>
               <button 
                 className={`mobileNavButton ${activePage === '/maps' ? 'active' : ''}`} 
-                onClick={() => { go('/maps'); setIsMenuOpen(false); }}
+                onClick={() => go('/maps')}
               >
                 <Map className="icon" />
-                <span>Maps</span>
+                <span>Maps & Alerts</span>
               </button>
               <button 
                 className={`mobileNavButton ${activePage === '/compare' ? 'active' : ''}`} 
-                onClick={() => { go('/compare'); setIsMenuOpen(false); }}
+                onClick={() => go('/compare')}
               >
                 <GitCompare className="icon" />
-                <span>Compare</span>
+                <span>Compare Climate</span>
               </button>
               <button 
                 className={`mobileNavButton ${activePage.startsWith('/smart-travel') ? 'active' : ''}`} 
-                onClick={() => { go('/smart-travel'); setIsMenuOpen(false); }}
+                onClick={() => go('/smart-travel')}
               >
                 <Compass className="icon" />
                 <span>Smart Travel</span>
               </button>
               <button 
                 className={`mobileNavButton ${activePage.startsWith('/smart-agriculture') ? 'active' : ''}`} 
-                onClick={() => { go('/smart-agriculture'); setIsMenuOpen(false); }}
+                onClick={() => go('/smart-agriculture')}
               >
                 <Sprout className="icon" />
                 <span>Smart Agriculture</span>
               </button>
-              
-              {/* Mobile search */}
+              <button 
+                className={`mobileNavButton ${activePage === '/assistant' ? 'active' : ''}`} 
+                onClick={() => go('/assistant')}
+              >
+                <Bot className="icon" />
+                <span>AI Climate Assistant</span>
+              </button>
+              <button 
+                className={`mobileNavButton ${activePage === '/reports' ? 'active' : ''}`} 
+                onClick={() => go('/reports')}
+              >
+                <FileText className="icon" />
+                <span>Reports & Analytics</span>
+              </button>
+
+              {/* Mobile Quick Search */}
               <div className="mobileSearchWrapper">
                 <Search className="searchIcon" />
                 <input
                   type="text"
-                  placeholder="Search location..."
+                  placeholder="Search forecast location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') submitSearch(searchQuery, true); }}
                   className="mobileSearchInput"
                 />
               </div>
-              
-              {/* Mobile auth buttons */}
+
+              {/* Mobile Auth button */}
               <div className="mobileAuthButtons">
-                <button className="mobileSignInButton">
+                <button className="mobileSignUpButton" onClick={() => go('/signup')}>
                   <User className="icon" />
-                  <span>Sign In</span>
-                </button>
-                <button className="mobileSignUpButton">
-                  <User className="icon" />
-                  <span>Sign Up</span>
+                  <span>Get Started / Sign In</span>
                 </button>
               </div>
             </div>
