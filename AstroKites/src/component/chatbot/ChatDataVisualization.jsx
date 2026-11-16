@@ -34,7 +34,7 @@ const MiniSparkline = ({ data = [], color = '#2563eb', height = 48, width = 280 
 
   return (
     <div className="chat-sparkline-container">
-      <svg width={width} height={height} className="chat-sparkline-svg">
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} className="chat-sparkline-svg">
         <polyline
           fill="none"
           stroke={color}

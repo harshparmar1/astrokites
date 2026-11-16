@@ -95,3 +95,15 @@
 .login-link a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 480px) {
+  .signup-container {
+    padding: 12px;
+  }
+  .signup-card {
+    padding: 24px 16px;
+  }
+  .signup-title {
+    font-size: 22px;
+  }
+}

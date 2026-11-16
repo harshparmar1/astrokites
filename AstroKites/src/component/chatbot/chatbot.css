@@ -50,6 +50,13 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   animation: akFadeIn 0.35s ease-out;
+  max-width: 260px;
+}
+
+.bubble-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chatbot-prompt-bubble:hover {
@@ -1114,8 +1121,12 @@
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
   .astrokites-chatbot-root {
-    bottom: 16px;
-    right: 16px;
+    bottom: 14px;
+    right: 14px;
+  }
+
+  .launcher-open-mobile-hide {
+    display: none !important;
   }
 
   .chatbot-window-wrapper {
@@ -1126,17 +1137,42 @@
     bottom: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
+    height: 100svh;
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
+    z-index: 100000;
   }
 
   .ak-chat-window {
     border-radius: 0;
     border: none;
+    height: 100%;
+  }
+
+  .ak-header-btn-expand {
+    display: none !important;
   }
 
   .chatbot-prompt-bubble {
-    display: none;
+    display: none !important;
+  }
+
+  .ak-messages-container {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .user-message, .assistant-message {
+    max-width: 92%;
+  }
+
+  .ak-chat-input-form {
+    padding: 8px 10px 10px;
+  }
+
+  .ak-chat-textarea {
+    font-size: 14px;
   }
 }

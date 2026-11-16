@@ -28,7 +28,7 @@ const ChatbotWidget = () => {
       )}
 
       {/* Floating Assistant Launcher Button */}
-      <div className="chatbot-launcher-container">
+      <div className={`chatbot-launcher-container ${isChatOpen ? 'launcher-open-mobile-hide' : ''}`}>
         {!isChatOpen && (
           <div className="chatbot-prompt-bubble" onClick={toggleChat} role="button">
             <span className="bubble-sparkle">✨</span>
